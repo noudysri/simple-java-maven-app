@@ -11,26 +11,40 @@ stages:
       - job: BuildJob
         displayName: 'Build and Test'
         steps:
-          # Step 1: Install Maven 3.9.2
+          # Step 1: Check and install Maven 3.9.2
+          - script: |
+              echo "Setting Maven 3.9.2"
+              mvn -version
+            displayName: 'Verify Maven Version'
+
+          # Step 2: Install Maven 3.9.2 via the built-in Maven task
           - task: Maven@4
             inputs:
               mavenVersionOption: 'Custom'
               mavenVersion: '3.9.2'
               mavenSetM2Home: true
 
-          # Step 2: Install Java 17
+          # Step 3: Install Java 17 using JavaToolInstaller
           - task: JavaToolInstaller@0
             inputs:
               versionSpec: '17'
               jdkArchitectureOption: 'x64'
               jdkSourceOption: 'PreInstalled'
+              jdkDestinationDirectory: '$(Agent.ToolsDirectory)/Java_17'
 
-          # Step 3: Maven build
+          # Step 4: Validate Java Version
+          - script: |
+              java -version
+              echo "JAVA_HOME=$JAVA_HOME"
+            displayName: 'Check Java Version'
+
+          # Step 5: Maven Build (use clean and package goals)
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
               goals: 'clean package'
               javaHomeOption: 'JDKVersion'
               mavenVersionOption: 'Custom'
+              mavenAuthenticateFeed: false
               publishJUnitResults: true
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
